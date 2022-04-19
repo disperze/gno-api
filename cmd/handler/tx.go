@@ -27,6 +27,7 @@ func TxsHandler(cli client.ABCIClient) http.HandlerFunc {
 		}
 
 		txBz, _ := txData.MarshalJSON()
+		fmt.Println("json data: ", string(txBz))
 		var tx std.Tx
 		err = amino.UnmarshalJSON(txBz, &tx)
 		if err != nil {
