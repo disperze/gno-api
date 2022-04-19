@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -62,7 +61,7 @@ func TxsHandler(cli client.ABCIClient) http.HandlerFunc {
 		}
 
 		result := BroadcastResponse{
-			Hash:   hex.EncodeToString(res.Hash),
+			Hash:   fmt.Sprintf("%X", res.Hash),
 			Height: res.Height,
 			Result: res.DeliverTx,
 		}
