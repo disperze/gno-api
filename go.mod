@@ -8,7 +8,9 @@ require (
 )
 
 require (
+	github.com/btcsuite/btcd v0.20.1-beta // indirect
 	github.com/btcsuite/btcutil v1.0.2 // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/gnolang/cors v1.8.1 // indirect
 	github.com/gnolang/overflow v0.0.0-20170615021017-4d914c927216 // indirect
 	github.com/golang/protobuf v1.5.0 // indirect
