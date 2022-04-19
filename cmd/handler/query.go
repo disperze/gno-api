@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/gnolang/gno/pkgs/bft/rpc/client"
@@ -88,7 +89,7 @@ func BankQueryHandler(cli client.ABCIClient) http.HandlerFunc {
 			Balances: coins,
 			Pagination: PaginationInfo{
 				NextKey: nil,
-				Total:   "1",
+				Total:   strconv.Itoa(len(coins)),
 			},
 		}
 		w.Header().Set("Content-Type", "application/json")
