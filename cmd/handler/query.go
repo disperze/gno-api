@@ -40,6 +40,12 @@ func AuthQueryHandler(cli client.ABCIClient) http.HandlerFunc {
 			writeError(w, err)
 			return
 		}
+
+		if string(res.Response.Data) == "null" {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
 		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprint(w, string(res.Response.Data))
@@ -70,10 +76,16 @@ func BankQueryHandler(cli client.ABCIClient) http.HandlerFunc {
 			return
 		}
 
+		coins := []Coin{}
+		if balance != "" {
+			coins = append(coins, Coin{
+				Denom:  denom,
+				Amount: strings.TrimRight(balance, denom),
+			})
+		}
+
 		result := BankResult{
-			Balances: []Coin{
-				{Denom: denom, Amount: strings.TrimRight(balance, denom)},
-			},
+			Balances: coins,
 			Pagination: PaginationInfo{
 				NextKey: nil,
 				Total:   "1",
