@@ -1,11 +1,13 @@
 package handler
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net/http"
 
 	"github.com/gnolang/gno/pkgs/amino"
+	abci "github.com/gnolang/gno/pkgs/bft/abci/types"
 	"github.com/gnolang/gno/pkgs/bft/rpc/client"
 	ctypes "github.com/gnolang/gno/pkgs/bft/rpc/core/types"
 	"github.com/gnolang/gno/pkgs/std"
@@ -13,6 +15,12 @@ import (
 	_ "github.com/gnolang/gno/pkgs/sdk/bank"
 	_ "github.com/gnolang/gno/pkgs/sdk/vm"
 )
+
+type BroadcastResponse struct {
+	Result abci.ResponseDeliverTx `json:"result"`
+	Hash   string                 `json:"hash"`
+	Height int64                  `json:"height"`
+}
 
 func TxsHandler(cli client.ABCIClient) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -53,9 +61,15 @@ func TxsHandler(cli client.ABCIClient) http.HandlerFunc {
 			return
 		}
 
+		result := BroadcastResponse{
+			Hash:   hex.EncodeToString(res.Hash),
+			Height: res.Height,
+			Result: res.DeliverTx,
+		}
+
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(res.DeliverTx)
+		json.NewEncoder(w).Encode(result)
 	}
 }
 
