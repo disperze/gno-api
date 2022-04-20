@@ -38,7 +38,7 @@ func GnoRenderQueryHandler(cli client.ABCIClient) http.HandlerFunc {
 		}
 
 		if res.Response.Error != nil {
-			writeError(w, err)
+			writeError(w, res.Response.Error)
 			return
 		}
 
@@ -58,7 +58,7 @@ func AuthQueryHandler(cli client.ABCIClient) http.HandlerFunc {
 		}
 
 		if res.Response.Error != nil {
-			writeError(w, err)
+			writeError(w, res.Response.Error)
 			return
 		}
 
