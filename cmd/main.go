@@ -11,6 +11,9 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/disperze/gno-api/cmd/handler"
+
+	_ "github.com/gnolang/gno/pkgs/sdk/bank"
+	_ "github.com/gnolang/gno/pkgs/sdk/vm"
 )
 
 var (

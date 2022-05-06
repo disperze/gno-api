@@ -10,9 +10,6 @@ import (
 	"github.com/gnolang/gno/pkgs/bft/rpc/client"
 	ctypes "github.com/gnolang/gno/pkgs/bft/rpc/core/types"
 	"github.com/gnolang/gno/pkgs/std"
-
-	_ "github.com/gnolang/gno/pkgs/sdk/bank"
-	_ "github.com/gnolang/gno/pkgs/sdk/vm"
 )
 
 type BroadcastResponse struct {
