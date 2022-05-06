@@ -1,13 +1,16 @@
 package handler
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
 
+	"github.com/gnolang/gno/pkgs/amino"
 	"github.com/gnolang/gno/pkgs/bft/rpc/client"
+	"github.com/gnolang/gno/pkgs/std"
 
 	"github.com/gorilla/mux"
 )
@@ -70,6 +73,40 @@ func AuthQueryHandler(cli client.ABCIClient) http.HandlerFunc {
 		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprint(w, string(res.Response.Data))
+	}
+}
+
+func TxDecodeHandler(cli client.ABCIClient) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		params := r.URL.Query()
+		txParam := params.Get("tx")
+		if txParam == "" {
+			writeError(w, fmt.Errorf("tx param is required"))
+			return
+		}
+
+		txData, err := base64.StdEncoding.DecodeString(txParam)
+		if err != nil {
+			writeError(w, err)
+			return
+		}
+
+		var tx std.Tx
+		err = amino.Unmarshal(txData, &tx)
+		if err != nil {
+			writeError(w, err)
+			return
+		}
+
+		jsonData, err := amino.MarshalJSON(&tx)
+		if err != nil {
+			writeError(w, err)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprint(w, string(jsonData))
 	}
 }
 
