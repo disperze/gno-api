@@ -72,20 +72,17 @@ func TxsHandler(cli client.ABCIClient) http.HandlerFunc {
 
 func ProtoTxsHandler(cli client.ABCIClient) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var params map[string]string
+		var params struct {
+			TxBytes string `json:"tx_bytes"`
+			Mode    string `json:"mode"`
+		}
 		err := json.NewDecoder(r.Body).Decode(&params)
 		if err != nil {
 			writeError(w, fmt.Errorf("%s, %s", "unmarshaling json params", err.Error()))
 			return
 		}
 
-		txData, ok := params["tx"]
-		if !ok {
-			writeError(w, fmt.Errorf("%s, %s", "Missing tx param", err.Error()))
-			return
-		}
-
-		txBz, err := base64.StdEncoding.DecodeString(txData)
+		txBz, err := base64.StdEncoding.DecodeString(params.TxBytes)
 		if err != nil {
 			writeError(w, fmt.Errorf("%s, %s", "cannot decode tx", err.Error()))
 			return
