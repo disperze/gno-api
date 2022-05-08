@@ -36,11 +36,12 @@ func main() {
 	cli := client.NewHTTP(*remotePtr, "/websocket")
 
 	r := mux.NewRouter()
-	r.HandleFunc("/gno/render", handler.GnoRenderQueryHandler(cli)).Methods("GET")
+	r.HandleFunc("/gno/render", handler.GnoRenderQueryHandler(cli)).Methods(http.MethodGet)
 	r.HandleFunc("/cosmos/auth/v1beta1/accounts/{address}", handler.AuthQueryHandler(cli))
 	r.HandleFunc("/cosmos/bank/v1beta1/balances/{address}", handler.BankQueryHandler(cli))
 	r.HandleFunc("/cosmos/staking/v1beta1/delegations/{address}", handler.StakingQueryHandler(cli))
 	r.HandleFunc("/cosmos/staking/v1beta1/delegators/{address}/unbonding_delegations", handler.StakingUnbondingQueryHandler(cli))
+	r.HandleFunc("/cosmos/tx/v1beta1/txs", handler.ProtoTxsHandler(cli)).Methods(http.MethodPost)
 	r.HandleFunc("/txs/decode", handler.TxDecodeHandler(cli)).Methods(http.MethodGet)
 	r.HandleFunc("/txs", handler.TxsHandler(cli)).Methods(http.MethodPost)
 
