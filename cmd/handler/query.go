@@ -30,6 +30,23 @@ type BankResult struct {
 	Pagination PaginationInfo `json:"pagination"`
 }
 
+type AuthAccount struct {
+	Account CosmosAccount `json:"account"`
+}
+
+type CosmosAccount struct {
+	Type          string  `json:"@type"`
+	Address       string  `json:"address"`
+	PubKey        AuthKey `json:"pub_key"`
+	AccountNumber string  `json:"account_number"`
+	Sequence      string  `json:"sequence"`
+}
+
+type AuthKey struct {
+	Type string `json:"@type"`
+	Key  string `json:"key"`
+}
+
 func GnoRenderQueryHandler(cli client.ABCIClient) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		params := r.URL.Query()
@@ -65,14 +82,33 @@ func AuthQueryHandler(cli client.ABCIClient) http.HandlerFunc {
 			return
 		}
 
-		if string(res.Response.Data) == "null" {
+		var account std.Account
+		err = amino.UnmarshalJSON(res.Response.Data, &account)
+		if err != nil {
+			writeError(w, err)
+			return
+		}
+
+		if account == nil {
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
 
+		result := AuthAccount{
+			Account: CosmosAccount{
+				Type:    "/cosmos.auth.v1beta1.BaseAccount",
+				Address: account.GetAddress().String(),
+				PubKey: AuthKey{
+					Type: "/tm.PubKeySecp256k1",
+					Key:  base64.StdEncoding.EncodeToString(account.GetPubKey().Bytes()),
+				},
+				AccountNumber: strconv.FormatUint(account.GetAccountNumber(), 10),
+				Sequence:      strconv.FormatUint(account.GetSequence(), 10),
+			},
+		}
 		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprint(w, string(res.Response.Data))
+		json.NewEncoder(w).Encode(result)
 	}
 }
 
