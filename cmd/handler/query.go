@@ -10,6 +10,7 @@ import (
 
 	"github.com/gnolang/gno/pkgs/amino"
 	"github.com/gnolang/gno/pkgs/bft/rpc/client"
+	"github.com/gnolang/gno/pkgs/crypto"
 	"github.com/gnolang/gno/pkgs/std"
 
 	"github.com/gorilla/mux"
@@ -35,16 +36,15 @@ type AuthAccount struct {
 }
 
 type CosmosAccount struct {
-	Type          string  `json:"@type"`
-	Address       string  `json:"address"`
-	PubKey        AuthKey `json:"pub_key"`
-	AccountNumber string  `json:"account_number"`
-	Sequence      string  `json:"sequence"`
+	Type          string         `json:"@type"`
+	Address       crypto.Address `json:"address"`
+	PubKey        crypto.PubKey  `json:"pub_key"`
+	AccountNumber uint64         `json:"account_number"`
+	Sequence      uint64         `json:"sequence"`
 }
 
-type AuthKey struct {
-	Type string `json:"@type"`
-	Key  string `json:"key"`
+type GnoAccount struct {
+	std.BaseAccount
 }
 
 func GnoRenderQueryHandler(cli client.ABCIClient) http.HandlerFunc {
@@ -82,33 +82,32 @@ func AuthQueryHandler(cli client.ABCIClient) http.HandlerFunc {
 			return
 		}
 
-		var account std.Account
+		var account GnoAccount
 		err = amino.UnmarshalJSON(res.Response.Data, &account)
 		if err != nil {
 			writeError(w, err)
 			return
 		}
 
-		if account == nil {
+		if account.Address.IsZero() {
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
 
 		result := AuthAccount{
 			Account: CosmosAccount{
-				Type:    "/cosmos.auth.v1beta1.BaseAccount",
-				Address: account.GetAddress().String(),
-				PubKey: AuthKey{
-					Type: "/tm.PubKeySecp256k1",
-					Key:  base64.StdEncoding.EncodeToString(account.GetPubKey().Bytes()),
-				},
-				AccountNumber: strconv.FormatUint(account.GetAccountNumber(), 10),
-				Sequence:      strconv.FormatUint(account.GetSequence(), 10),
+				Type:          "/cosmos.auth.v1beta1.BaseAccount",
+				Address:       account.GetAddress(),
+				PubKey:        account.GetPubKey(),
+				AccountNumber: account.GetAccountNumber(),
+				Sequence:      account.GetSequence(),
 			},
 		}
+
+		json, _ := amino.MarshalJSONIndent(result, "", "  ")
 		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(result)
+		fmt.Fprint(w, string(json))
 	}
 }
 
