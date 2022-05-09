@@ -20,7 +20,7 @@ type TxResponse struct {
 	Height    int64  `json:"height,omitempty"`
 	TxHash    string `json:"txhash,omitempty"`
 	Code      uint32 `json:"code,omitempty"`
-	Data      string `json:"data,omitempty"`
+	Data      []byte `json:"data,omitempty"`
 	RawLog    string `json:"raw_log,omitempty"`
 	GasWanted int64  `json:"gas_wanted,omitempty"`
 	GasUsed   int64  `json:"gas_used,omitempty"`
@@ -61,7 +61,7 @@ func TxsHandler(cli client.ABCIClient) http.HandlerFunc {
 				TxHash:    fmt.Sprintf("%X", res.Hash),
 				Height:    res.Height,
 				Code:      code,
-				Data:      string(res.DeliverTx.Data),
+				Data:      res.DeliverTx.Data,
 				RawLog:    log,
 				GasWanted: res.DeliverTx.GasWanted,
 				GasUsed:   res.DeliverTx.GasUsed,
@@ -104,7 +104,7 @@ func ProtoTxsHandler(cli client.ABCIClient) http.HandlerFunc {
 				TxHash:    fmt.Sprintf("%X", res.Hash),
 				Height:    res.Height,
 				Code:      code,
-				Data:      string(res.DeliverTx.Data),
+				Data:      res.DeliverTx.Data,
 				RawLog:    log,
 				GasWanted: res.DeliverTx.GasWanted,
 				GasUsed:   res.DeliverTx.GasUsed,
