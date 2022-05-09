@@ -7,16 +7,23 @@ import (
 	"net/http"
 
 	"github.com/gnolang/gno/pkgs/amino"
-	abci "github.com/gnolang/gno/pkgs/bft/abci/types"
 	"github.com/gnolang/gno/pkgs/bft/rpc/client"
 	ctypes "github.com/gnolang/gno/pkgs/bft/rpc/core/types"
 	"github.com/gnolang/gno/pkgs/std"
 )
 
-type BroadcastResponse struct {
-	Result abci.ResponseDeliverTx `json:"result"`
-	Hash   string                 `json:"hash"`
-	Height int64                  `json:"height"`
+type BroadcastTxResponse struct {
+	TxResponse *TxResponse `json:"tx_response,omitempty"`
+}
+
+type TxResponse struct {
+	Height    int64  `json:"height,omitempty"`
+	TxHash    string `json:"txhash,omitempty"`
+	Code      uint32 `json:"code,omitempty"`
+	Data      string `json:"data,omitempty"`
+	RawLog    string `json:"raw_log,omitempty"`
+	GasWanted int64  `json:"gas_wanted,omitempty"`
+	GasUsed   int64  `json:"gas_used,omitempty"`
 }
 
 func TxsHandler(cli client.ABCIClient) http.HandlerFunc {
@@ -48,20 +55,17 @@ func TxsHandler(cli client.ABCIClient) http.HandlerFunc {
 			return
 		}
 
-		if res.CheckTx.IsErr() {
-			writeError(w, fmt.Errorf("transaction failed %#v\nlog %s", res, res.CheckTx.Log))
-			return
-		}
-
-		if res.DeliverTx.IsErr() {
-			writeError(w, fmt.Errorf("transaction failed %#v\nlog %s", res, res.DeliverTx.Log))
-			return
-		}
-
-		result := BroadcastResponse{
-			Hash:   fmt.Sprintf("%X", res.Hash),
-			Height: res.Height,
-			Result: res.DeliverTx,
+		code, log := getCodeLog(res)
+		result := BroadcastTxResponse{
+			TxResponse: &TxResponse{
+				TxHash:    fmt.Sprintf("%X", res.Hash),
+				Height:    res.Height,
+				Code:      code,
+				Data:      string(res.DeliverTx.Data),
+				RawLog:    log,
+				GasWanted: res.DeliverTx.GasWanted,
+				GasUsed:   res.DeliverTx.GasUsed,
+			},
 		}
 
 		w.Header().Set("Content-Type", "application/json")
@@ -94,26 +98,35 @@ func ProtoTxsHandler(cli client.ABCIClient) http.HandlerFunc {
 			return
 		}
 
-		if res.CheckTx.IsErr() {
-			writeError(w, fmt.Errorf("transaction failed %#v\nlog %s", res, res.CheckTx.Log))
-			return
-		}
-
-		if res.DeliverTx.IsErr() {
-			writeError(w, fmt.Errorf("transaction failed %#v\nlog %s", res, res.DeliverTx.Log))
-			return
-		}
-
-		result := BroadcastResponse{
-			Hash:   fmt.Sprintf("%X", res.Hash),
-			Height: res.Height,
-			Result: res.DeliverTx,
+		code, log := getCodeLog(res)
+		result := BroadcastTxResponse{
+			TxResponse: &TxResponse{
+				TxHash:    fmt.Sprintf("%X", res.Hash),
+				Height:    res.Height,
+				Code:      code,
+				Data:      string(res.DeliverTx.Data),
+				RawLog:    log,
+				GasWanted: res.DeliverTx.GasWanted,
+				GasUsed:   res.DeliverTx.GasUsed,
+			},
 		}
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(result)
 	}
+}
+
+func getCodeLog(res *ctypes.ResultBroadcastTxCommit) (uint32, string) {
+	if res.CheckTx.IsErr() {
+		return 1, res.CheckTx.Log
+	}
+
+	if res.DeliverTx.IsErr() {
+		return 2, res.DeliverTx.Log
+	}
+
+	return 0, ""
 }
 
 func BroadcastHandler(cli client.ABCIClient, tx std.Tx) (*ctypes.ResultBroadcastTxCommit, error) {
