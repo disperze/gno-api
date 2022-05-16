@@ -11,3 +11,9 @@ make build
 
 ./build/gnoapi
 ```
+
+Custom port and cors enabled.
+
+```
+./build/gnoapi --port 1317 --cors
+```

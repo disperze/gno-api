@@ -9,6 +9,7 @@ import (
 	"github.com/gnolang/gno/pkgs/bft/rpc/client"
 
 	"github.com/gorilla/mux"
+	"github.com/rs/cors"
 
 	"github.com/disperze/gno-api/cmd/handler"
 
@@ -19,6 +20,7 @@ import (
 var (
 	remotePtr  = flag.String("remote", "http://gno.land:36657", "Remote rpc")
 	apiPortPtr = flag.String("port", "8888", "Api port")
+	corsPtr    = flag.Bool("cors", false, "Enable CORS")
 )
 
 func main() {
@@ -31,6 +33,12 @@ func main() {
 	if apiPortPtr == nil || *apiPortPtr == "" {
 		log.Fatal("api port is required")
 	}
+
+	c := cors.New(cors.Options{
+		AllowedOrigins: []string{"*"},
+		AllowedMethods: []string{http.MethodGet, http.MethodPost},
+		AllowedHeaders: []string{"Content-Type", "Accept"},
+	})
 
 	apiPort := *apiPortPtr
 	cli := client.NewHTTP(*remotePtr, "/websocket")
@@ -45,6 +53,11 @@ func main() {
 	r.HandleFunc("/txs/decode", handler.TxDecodeHandler(cli)).Methods(http.MethodGet)
 	r.HandleFunc("/txs", handler.TxsHandler(cli)).Methods(http.MethodPost)
 
+	var h http.Handler = r
+	if *corsPtr {
+		h = c.Handler(r)
+	}
+
 	fmt.Println("Running on port", apiPort)
-	log.Fatal(http.ListenAndServe(":"+apiPort, r))
+	log.Fatal(http.ListenAndServe(":"+apiPort, h))
 }
