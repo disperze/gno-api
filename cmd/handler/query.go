@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/gnolang/gno/gnoland"
 	"github.com/gnolang/gno/pkgs/amino"
 	"github.com/gnolang/gno/pkgs/bft/rpc/client"
 	"github.com/gnolang/gno/pkgs/crypto"
@@ -41,10 +42,6 @@ type CosmosAccount struct {
 	PubKey        crypto.PubKey  `json:"pub_key"`
 	AccountNumber uint64         `json:"account_number"`
 	Sequence      uint64         `json:"sequence"`
-}
-
-type GnoAccount struct {
-	std.BaseAccount
 }
 
 func GnoRenderQueryHandler(cli client.ABCIClient) http.HandlerFunc {
@@ -82,7 +79,7 @@ func AuthQueryHandler(cli client.ABCIClient) http.HandlerFunc {
 			return
 		}
 
-		var account GnoAccount
+		var account gnoland.GnoAccount
 		err = amino.UnmarshalJSON(res.Response.Data, &account)
 		if err != nil {
 			writeError(w, err)
