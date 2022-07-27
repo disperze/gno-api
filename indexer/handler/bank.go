@@ -10,13 +10,13 @@ import (
 func BankEvents(msg bank.MsgSend) []abci.Event {
 	return []abci.Event{
 		{Type: "message", Attributes: []abci.EventAttribute{
-			{Key: []byte("module"), Value: []byte("bank")},
-			{Key: []byte("action"), Value: []byte("transfer")},
-			{Key: []byte("sender"), Value: []byte(msg.FromAddress.String())},
+			{Key: []byte("module"), Value: []byte("bank"), Index: true},
+			{Key: []byte("action"), Value: []byte("transfer"), Index: true},
+			{Key: []byte("sender"), Value: []byte(msg.FromAddress.String()), Index: true},
 		}},
 		{Type: "transfer", Attributes: []abci.EventAttribute{
-			{Key: []byte("from"), Value: []byte(msg.FromAddress.String())},
-			{Key: []byte("to"), Value: []byte(msg.ToAddress.String())},
+			{Key: []byte("from"), Value: []byte(msg.FromAddress.String()), Index: true},
+			{Key: []byte("to"), Value: []byte(msg.ToAddress.String()), Index: true},
 			{Key: []byte("amount"), Value: []byte(msg.Amount.String())},
 		}},
 	}

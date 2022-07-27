@@ -26,14 +26,14 @@ func VmAddPackageEvents(msg vm.MsgAddPackage) []abci.Event {
 func VmCallEvents(msg vm.MsgCall) []abci.Event {
 	return []abci.Event{
 		{Type: "message", Attributes: []abci.EventAttribute{
-			{Key: []byte("module"), Value: []byte("vm")},
-			{Key: []byte("action"), Value: []byte("call")},
-			{Key: []byte("sender"), Value: []byte(msg.Caller.String())},
+			{Key: []byte("module"), Value: []byte("vm"), Index: true},
+			{Key: []byte("action"), Value: []byte("call"), Index: true},
+			{Key: []byte("sender"), Value: []byte(msg.Caller.String()), Index: true},
 		}},
 		{Type: "package", Attributes: []abci.EventAttribute{
-			{Key: []byte("caller"), Value: []byte(msg.Caller.String())},
-			{Key: []byte("package"), Value: []byte(msg.PkgPath)},
-			{Key: []byte("func"), Value: []byte(msg.Func)},
+			{Key: []byte("caller"), Value: []byte(msg.Caller.String()), Index: true},
+			{Key: []byte("package"), Value: []byte(msg.PkgPath), Index: true},
+			{Key: []byte("func"), Value: []byte(msg.Func), Index: true},
 			{Key: []byte("send"), Value: []byte(msg.Send.String())},
 		}},
 	}
