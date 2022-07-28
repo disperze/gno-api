@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 
 	"github.com/gnolang/gno/pkgs/amino"
 	"github.com/gnolang/gno/pkgs/bft/rpc/client"
@@ -28,7 +27,6 @@ func start(index *kv.TxIndex, remote string, startHeight int64) error {
 	last := status.SyncInfo.LatestBlockHeight
 
 	for height := startHeight; height <= last; height++ {
-		fmt.Printf("Height: %d\n", height)
 		block, err := c.Block(&height)
 		if err != nil {
 			return err
