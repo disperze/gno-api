@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/gnolang/gno/gnoland"
 	"github.com/gnolang/gno/pkgs/amino"
@@ -17,18 +16,13 @@ import (
 	"github.com/gorilla/mux"
 )
 
-type Coin struct {
-	Denom  string `json:"denom"`
-	Amount string `json:"amount"`
-}
-
 type PaginationInfo struct {
 	NextKey []byte `json:"next_key"`
 	Total   string `json:"total"`
 }
 
 type BankResult struct {
-	Balances   []Coin         `json:"balances"`
+	Balances   []std.Coin     `json:"balances"`
 	Pagination PaginationInfo `json:"pagination"`
 }
 
@@ -145,7 +139,6 @@ func TxDecodeHandler(cli client.ABCIClient) http.HandlerFunc {
 func BankQueryHandler(cli client.ABCIClient) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
-		denom := "gnot"
 
 		authPath := fmt.Sprintf("bank/balances/%s", vars["address"])
 		res, err := cli.ABCIQuery(authPath, nil)
@@ -166,12 +159,9 @@ func BankQueryHandler(cli client.ABCIClient) http.HandlerFunc {
 			return
 		}
 
-		coins := []Coin{}
+		coins := []std.Coin{}
 		if balance != "" {
-			coins = append(coins, Coin{
-				Denom:  denom,
-				Amount: strings.TrimRight(balance, denom),
-			})
+			coins = append(coins, std.MustParseCoin(balance))
 		}
 
 		result := BankResult{
