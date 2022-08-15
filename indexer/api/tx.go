@@ -4,92 +4,82 @@ import (
 	"crypto/sha256"
 	"errors"
 	"log"
-	"net/http"
 	"sort"
 
 	"github.com/tendermint/tendermint/libs/bytes"
 	tmmath "github.com/tendermint/tendermint/libs/math"
 	tmquery "github.com/tendermint/tendermint/libs/pubsub/query"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
-	"github.com/tendermint/tendermint/state/txindex/kv"
+	rpctypes "github.com/tendermint/tendermint/rpc/jsonrpc/types"
+	"github.com/tendermint/tendermint/state/txindex"
 )
 
-type TxService struct {
-	indexer *kv.TxIndex
-}
+func NewTxSearch(indexer txindex.TxIndexer) interface{} {
+	return func(
+		ctx *rpctypes.Context,
+		query string,
+		prove bool,
+		pagePtr, perPagePtr *int,
+		orderBy string,
+	) (*ctypes.ResultTxSearch, error) {
+		log.Printf("Query %s\n", query)
 
-type Args struct {
-	query               string
-	pagePtr, perPagePtr *int
-	orderBy             string
-}
+		q, err := tmquery.New(query)
+		if err != nil {
+			return nil, err
+		}
+		results, err := indexer.Search(ctx.Context(), q)
+		if err != nil {
+			return nil, err
+		}
 
-type Result ctypes.ResultTxSearch
+		// sort results (must be done before pagination)
+		switch orderBy {
+		case "desc":
+			sort.Slice(results, func(i, j int) bool {
+				if results[i].Height == results[j].Height {
+					return results[i].Index > results[j].Index
+				}
+				return results[i].Height > results[j].Height
+			})
+		case "asc", "":
+			sort.Slice(results, func(i, j int) bool {
+				if results[i].Height == results[j].Height {
+					return results[i].Index < results[j].Index
+				}
+				return results[i].Height < results[j].Height
+			})
+		default:
+			return nil, errors.New("expected order_by to be either `asc` or `desc` or empty")
+		}
 
-func NewTxService(indexer *kv.TxIndex) *TxService {
-	return &TxService{indexer}
-}
+		// paginate results
+		totalCount := len(results)
+		perPage := validatePerPage(perPagePtr)
 
-func (t *TxService) TxSearch(r *http.Request, args *Args, result *Result) error {
-	log.Printf("Query %s\n", args.query)
+		page, err := validatePage(pagePtr, perPage, totalCount)
+		if err != nil {
+			return nil, err
+		}
 
-	q, err := tmquery.New(args.query)
-	if err != nil {
-		return err
+		skipCount := validateSkipCount(page, perPage)
+		pageSize := tmmath.MinInt(perPage, totalCount-skipCount)
+
+		apiResults := make([]*ctypes.ResultTx, 0, pageSize)
+		for i := skipCount; i < skipCount+pageSize; i++ {
+			r := results[i]
+
+			apiResults = append(apiResults, &ctypes.ResultTx{
+				Hash:     bytes.HexBytes(NewSHA256(r.Tx)),
+				Height:   r.Height,
+				Index:    r.Index,
+				TxResult: r.Result,
+				Tx:       r.Tx,
+			})
+		}
+
+		return &ctypes.ResultTxSearch{Txs: apiResults, TotalCount: totalCount}, nil
 	}
-	results, err := t.indexer.Search(r.Context(), q)
-	if err != nil {
-		return err
-	}
-
-	// sort results (must be done before pagination)
-	switch args.orderBy {
-	case "desc":
-		sort.Slice(results, func(i, j int) bool {
-			if results[i].Height == results[j].Height {
-				return results[i].Index > results[j].Index
-			}
-			return results[i].Height > results[j].Height
-		})
-	case "asc", "":
-		sort.Slice(results, func(i, j int) bool {
-			if results[i].Height == results[j].Height {
-				return results[i].Index < results[j].Index
-			}
-			return results[i].Height < results[j].Height
-		})
-	default:
-		return errors.New("expected order_by to be either `asc` or `desc` or empty")
-	}
-
-	// paginate results
-	totalCount := len(results)
-	perPage := validatePerPage(args.perPagePtr)
-
-	page, err := validatePage(args.pagePtr, perPage, totalCount)
-	if err != nil {
-		return err
-	}
-
-	skipCount := validateSkipCount(page, perPage)
-	pageSize := tmmath.MinInt(perPage, totalCount-skipCount)
-
-	apiResults := make([]*ctypes.ResultTx, 0, pageSize)
-	for i := skipCount; i < skipCount+pageSize; i++ {
-		r := results[i]
-
-		apiResults = append(apiResults, &ctypes.ResultTx{
-			Hash:     bytes.HexBytes(NewSHA256(r.Tx)),
-			Height:   r.Height,
-			Index:    r.Index,
-			TxResult: r.Result,
-			Tx:       r.Tx,
-		})
-	}
-
-	*result = Result(ctypes.ResultTxSearch{Txs: apiResults, TotalCount: totalCount})
-
-	return nil
 }
 
 func NewSHA256(data []byte) []byte {
