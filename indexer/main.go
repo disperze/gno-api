@@ -7,6 +7,8 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/gorilla/rpc"
+	"github.com/gorilla/rpc/json"
 	"github.com/tendermint/tendermint/state/txindex/kv"
 	dbm "github.com/tendermint/tm-db"
 
@@ -16,6 +18,7 @@ import (
 
 var (
 	remotePtr      = flag.String("remote", "http://localhost:26657", "Remote rpc")
+	apiPortPtr     = flag.String("port", "8094", "Api port")
 	startHeightPtr = flag.Int64("start", 1, "Start height")
 )
 
@@ -36,9 +39,16 @@ func main() {
 	}()
 
 	indexer := kv.NewTxIndex(store)
-	r := mux.NewRouter()
-	r.HandleFunc("/tx_search", api.TxSearch(indexer)).Methods(http.MethodGet)
+	txSrv := api.NewTxService(indexer)
 
-	fmt.Println("Running on port", 8092)
-	log.Fatal(http.ListenAndServe(":8092", r))
+	s := rpc.NewServer()
+	s.RegisterCodec(json.NewCodec(), "application/json")
+	s.RegisterCodec(json.NewCodec(), "application/json;charset=UTF-8")
+	s.RegisterService(txSrv, "")
+
+	r := mux.NewRouter()
+	r.Handle("/", s)
+
+	fmt.Println("Running on port", *apiPortPtr)
+	log.Fatal(http.ListenAndServe(":"+*apiPortPtr, r))
 }
