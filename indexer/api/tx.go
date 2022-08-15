@@ -3,6 +3,7 @@ package api
 import (
 	"crypto/sha256"
 	"errors"
+	"fmt"
 	"log"
 	"sort"
 
@@ -13,6 +14,30 @@ import (
 	rpctypes "github.com/tendermint/tendermint/rpc/jsonrpc/types"
 	"github.com/tendermint/tendermint/state/txindex"
 )
+
+func NewTx(indexer txindex.TxIndexer) interface{} {
+	return func(ctx *rpctypes.Context, hash []byte, prove bool) (*ctypes.ResultTx, error) {
+		r, err := indexer.Get(hash)
+		if err != nil {
+			return nil, err
+		}
+
+		if r == nil {
+			return nil, fmt.Errorf("tx (%X) not found", hash)
+		}
+
+		height := r.Height
+		index := r.Index
+
+		return &ctypes.ResultTx{
+			Hash:     hash,
+			Height:   height,
+			Index:    index,
+			TxResult: r.Result,
+			Tx:       r.Tx,
+		}, nil
+	}
+}
 
 func NewTxSearch(indexer txindex.TxIndexer) interface{} {
 	return func(

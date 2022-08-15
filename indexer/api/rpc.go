@@ -11,7 +11,8 @@ import (
 
 func StartRPC(indexer txindex.TxIndexer, listner string) ([]net.Listener, error) {
 	var routes = map[string]*rpcserver.RPCFunc{
-		"tx_search": rpcserver.NewRPCFunc(NewTxSearch(indexer), "query,prove,page,per_page,order_by"),
+		"tx":        rpcserver.NewRPCFunc(NewTx(indexer), "hash"),
+		"tx_search": rpcserver.NewRPCFunc(NewTxSearch(indexer), "query,page,per_page,order_by"),
 	}
 
 	listenAddrs := []string{listner}
