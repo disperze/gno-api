@@ -21,6 +21,7 @@ type TxResult struct {
 	Height   string                 `json:"height"`
 	Index    uint32                 `json:"index"`
 	TxResult abci.ResponseDeliverTx `json:"tx_result"`
+	Tx       []byte                 `json:"tx"`
 }
 
 func TxSearch(indexer *kv.TxIndex) http.HandlerFunc {
@@ -39,13 +40,14 @@ func TxSearch(indexer *kv.TxIndex) http.HandlerFunc {
 		}
 
 		result := make([]TxResult, len(res))
-		for _, tx := range res {
-			result = append(result, TxResult{
+		for i, tx := range res {
+			result[i] = TxResult{
 				Hash:     fmt.Sprintf("%X", sha256.Sum256(tx.Tx)),
 				Height:   fmt.Sprintf("%d", tx.Height),
 				Index:    tx.Index,
 				TxResult: tx.Result,
-			})
+				Tx:       tx.Tx,
+			}
 		}
 		output := TxsResult{
 			Txs:        result,
