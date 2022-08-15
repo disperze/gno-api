@@ -26,8 +26,6 @@ func main() {
 	defer store.Close()
 
 	indexer := kv.NewTxIndex(store)
-	listeners, _ := api.StartRPC(indexer, *remotePtr)
-	listeners[0].Close()
 	go api.StartRPC(indexer, *rpcPtr)
 
 	err = StartIndexer(*remotePtr, store, *startHeightPtr)
