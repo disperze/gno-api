@@ -98,7 +98,7 @@ func batchSync(index *kv.TxIndex, remote string, startHeight int64) (int64, erro
 
 func StartIndexer(remote string, store dbm.DB, startHeight int64) error {
 	indexer := kv.NewTxIndex(store)
-	if exist, _ := store.Has(lastHeightKey); !exist {
+	if exist, _ := store.Has(lastHeightKey); exist {
 		val, err := store.Get(lastHeightKey)
 		if err != nil {
 			return err
