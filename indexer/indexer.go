@@ -108,7 +108,7 @@ func StartIndexer(remote string, store dbm.DB, startHeight int64) error {
 		if err != nil {
 			return err
 		}
-		startHeight = int64(h)
+		startHeight = int64(h + 1)
 	}
 
 	for {

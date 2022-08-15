@@ -39,9 +39,9 @@ func TxSearch(indexer *kv.TxIndex) http.HandlerFunc {
 			return
 		}
 
-		result := make([]TxResult, len(res))
+		txs := make([]TxResult, len(res))
 		for i, tx := range res {
-			result[i] = TxResult{
+			txs[i] = TxResult{
 				Hash:     fmt.Sprintf("%X", sha256.Sum256(tx.Tx)),
 				Height:   fmt.Sprintf("%d", tx.Height),
 				Index:    tx.Index,
@@ -50,8 +50,8 @@ func TxSearch(indexer *kv.TxIndex) http.HandlerFunc {
 			}
 		}
 		output := TxsResult{
-			Txs:        result,
-			TotalCount: fmt.Sprintf("%d", len(res)),
+			Txs:        txs,
+			TotalCount: fmt.Sprintf("%d", len(txs)),
 		}
 
 		jsonResponse, err := json.Marshal(output)
