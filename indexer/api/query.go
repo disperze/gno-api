@@ -1,6 +1,7 @@
 package api
 
 import (
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -10,13 +11,16 @@ import (
 	"github.com/tendermint/tendermint/state/txindex/kv"
 )
 
-type QueryResult struct {
-	Jsonrpc string   `json:"jsonrpc"`
-	ID      int      `json:"id"`
-	Result  TxResult `json:"result"`
+type TxsResult struct {
+	Txs        []TxResult `json:"txs"`
+	TotalCount string     `json:"total_count"`
 }
+
 type TxResult struct {
-	Txs []*abci.TxResult `json:"txs"`
+	Hash     string                 `json:"hash"`
+	Height   string                 `json:"height"`
+	Index    uint32                 `json:"index"`
+	TxResult abci.ResponseDeliverTx `json:"tx_result"`
 }
 
 func TxSearch(indexer *kv.TxIndex) http.HandlerFunc {
@@ -34,10 +38,18 @@ func TxSearch(indexer *kv.TxIndex) http.HandlerFunc {
 			return
 		}
 
-		output := QueryResult{
-			Jsonrpc: "2.0",
-			ID:      -1,
-			Result:  TxResult{Txs: res},
+		result := make([]TxResult, len(res))
+		for _, tx := range res {
+			result = append(result, TxResult{
+				Hash:     fmt.Sprintf("%X", sha256.Sum256(tx.Tx)),
+				Height:   fmt.Sprintf("%d", tx.Height),
+				Index:    tx.Index,
+				TxResult: tx.Result,
+			})
+		}
+		output := TxsResult{
+			Txs:        result,
+			TotalCount: fmt.Sprintf("%d", len(res)),
 		}
 
 		jsonResponse, err := json.Marshal(output)
