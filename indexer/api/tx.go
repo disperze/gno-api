@@ -15,7 +15,7 @@ import (
 )
 
 func NewTx(indexer txindex.TxIndexer) interface{} {
-	return func(ctx *rpctypes.Context, hash []byte) (*ctypes.ResultTx, error) {
+	return func(ctx *rpctypes.Context, hash []byte, prove bool) (*ctypes.ResultTx, error) {
 		r, err := indexer.Get(hash)
 		if err != nil {
 			return nil, err
@@ -42,6 +42,7 @@ func NewTxSearch(indexer txindex.TxIndexer) interface{} {
 	return func(
 		ctx *rpctypes.Context,
 		query string,
+		prove bool,
 		pagePtr, perPagePtr *int,
 		orderBy string,
 	) (*ctypes.ResultTxSearch, error) {
