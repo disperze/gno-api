@@ -12,4 +12,7 @@ install: go.sum
 build:
 	go build -o build/gnoapi ./cmd
 
+build-indexer:
+	go build -o build/gnoind ./indexer
+
 .PHONY: all install build
