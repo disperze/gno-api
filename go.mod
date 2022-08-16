@@ -3,6 +3,7 @@ module github.com/disperze/gno-api
 go 1.17
 
 require (
+	github.com/avast/retry-go/v4 v4.1.0
 	github.com/gnolang/gno v0.0.0-20220505214555-31c139670944
 	github.com/gorilla/mux v1.8.0
 	github.com/rs/cors v1.8.2

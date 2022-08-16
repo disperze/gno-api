@@ -27,7 +27,7 @@ var (
 )
 
 func batchSync(indexer txindex.TxIndexer, eventBus *ttypes.EventBus, remote string, startHeight int64) (int64, error) {
-	c := client.NewHTTP(remote, "/websocket")
+	c := NewRetryClient(client.NewHTTP(remote, "/websocket"))
 	status, err := c.Status()
 	if err != nil {
 		panic(err)
