@@ -92,28 +92,26 @@ func ProtoTxsHandler(cli client.ABCIClient) http.HandlerFunc {
 			return
 		}
 
-		res, err := cli.BroadcastTxCommit(txBz)
-		if err != nil {
-			writeError(w, fmt.Errorf("%s, %s", err.Error(), "broadcasting bytes"))
-			return
+		var response *BroadcastTxResponse
+		switch params.Mode {
+		case "BROADCAST_MODE_ASYNC":
+			response, err = broadcastAsync(cli, txBz)
+		case "BROADCAST_MODE_SYNC":
+			response, err = broadcastSync(cli, txBz)
+		case "BROADCAST_MODE_BLOCK":
+			response, err = broadcastCommit(cli, txBz)
+		default:
+			err = fmt.Errorf("%s, %s", "unknown mode", err.Error())
 		}
 
-		code, log := getCodeLog(res)
-		result := BroadcastTxResponse{
-			TxResponse: &TxResponse{
-				TxHash:    fmt.Sprintf("%X", res.Hash),
-				Height:    res.Height,
-				Code:      code,
-				Data:      res.DeliverTx.Data,
-				RawLog:    log,
-				GasWanted: res.DeliverTx.GasWanted,
-				GasUsed:   res.DeliverTx.GasUsed,
-			},
+		if err != nil {
+			writeError(w, fmt.Errorf("%s, %s", "cannot broadcast tx", err.Error()))
+			return
 		}
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(result)
+		json.NewEncoder(w).Encode(response)
 	}
 }
 
@@ -127,6 +125,73 @@ func getCodeLog(res *ctypes.ResultBroadcastTxCommit) (uint32, string) {
 	}
 
 	return 0, ""
+}
+
+func broadcastAsync(cli client.ABCIClient, tx []byte) (*BroadcastTxResponse, error) {
+	res, err := cli.BroadcastTxAsync(tx)
+	if err != nil {
+		return nil, err
+	}
+
+	code := uint32(0)
+	if res.Error != nil {
+		code = 1
+	}
+
+	result := &BroadcastTxResponse{
+		TxResponse: &TxResponse{
+			TxHash: fmt.Sprintf("%X", res.Hash),
+			Code:   code,
+			Data:   res.Data,
+			RawLog: res.Log,
+		},
+	}
+
+	return result, nil
+}
+
+func broadcastSync(cli client.ABCIClient, tx []byte) (*BroadcastTxResponse, error) {
+	res, err := cli.BroadcastTxSync(tx)
+	if err != nil {
+		return nil, err
+	}
+
+	code := uint32(0)
+	if res.Error != nil {
+		code = 1
+	}
+	result := &BroadcastTxResponse{
+		TxResponse: &TxResponse{
+			TxHash: fmt.Sprintf("%X", res.Hash),
+			Code:   code,
+			Data:   res.Data,
+			RawLog: res.Log,
+		},
+	}
+
+	return result, nil
+}
+
+func broadcastCommit(cli client.ABCIClient, tx []byte) (*BroadcastTxResponse, error) {
+	res, err := cli.BroadcastTxCommit(tx)
+	if err != nil {
+		return nil, err
+	}
+
+	code, log := getCodeLog(res)
+	result := &BroadcastTxResponse{
+		TxResponse: &TxResponse{
+			TxHash:    fmt.Sprintf("%X", res.Hash),
+			Height:    res.Height,
+			Code:      code,
+			Data:      res.DeliverTx.Data,
+			RawLog:    log,
+			GasWanted: res.DeliverTx.GasWanted,
+			GasUsed:   res.DeliverTx.GasUsed,
+		},
+	}
+
+	return result, nil
 }
 
 func BroadcastHandler(cli client.ABCIClient, tx std.Tx) (*ctypes.ResultBroadcastTxCommit, error) {
