@@ -1,18 +1,17 @@
 package api
 
 import (
-	"crypto/sha256"
 	"errors"
 	"fmt"
 	"log"
 	"sort"
 
-	"github.com/tendermint/tendermint/libs/bytes"
 	tmmath "github.com/tendermint/tendermint/libs/math"
 	tmquery "github.com/tendermint/tendermint/libs/pubsub/query"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	rpctypes "github.com/tendermint/tendermint/rpc/jsonrpc/types"
 	"github.com/tendermint/tendermint/state/txindex"
+	ttypes "github.com/tendermint/tendermint/types"
 )
 
 func NewTx(indexer txindex.TxIndexer) interface{} {
@@ -94,7 +93,7 @@ func NewTxSearch(indexer txindex.TxIndexer) interface{} {
 			r := results[i]
 
 			apiResults = append(apiResults, &ctypes.ResultTx{
-				Hash:     bytes.HexBytes(NewSHA256(r.Tx)),
+				Hash:     ttypes.Tx(r.Tx).Hash(),
 				Height:   r.Height,
 				Index:    r.Index,
 				TxResult: r.Result,
@@ -104,9 +103,4 @@ func NewTxSearch(indexer txindex.TxIndexer) interface{} {
 
 		return &ctypes.ResultTxSearch{Txs: apiResults, TotalCount: totalCount}, nil
 	}
-}
-
-func NewSHA256(data []byte) []byte {
-	hash := sha256.Sum256(data)
-	return hash[:]
 }
