@@ -64,9 +64,5 @@ func StartRPC(listener string, indexer txindex.TxIndexer, eventBus *ttypes.Event
 		listeners[i] = listener
 	}
 
-	if err := eventBus.Start(); err != nil {
-		return nil, err
-	}
-
 	return listeners, nil
 }
