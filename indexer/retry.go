@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/avast/retry-go/v4"
 	"github.com/gnolang/gno/pkgs/bft/rpc/client"
 	ctypes "github.com/gnolang/gno/pkgs/bft/rpc/core/types"
@@ -22,7 +24,7 @@ func (r *RetryClient) Status() (*ctypes.ResultStatus, error) {
 			result, err = r.cli.Status()
 			return err
 		},
-		retry.DelayType(retry.BackOffDelay),
+		r.getRetryOptions()...,
 	)
 
 	return result, err
@@ -36,7 +38,7 @@ func (r *RetryClient) Block(height *int64) (*ctypes.ResultBlock, error) {
 			result, err = r.cli.Block(height)
 			return err
 		},
-		retry.DelayType(retry.BackOffDelay),
+		r.getRetryOptions()...,
 	)
 
 	return result, err
@@ -50,8 +52,17 @@ func (r *RetryClient) BlockResults(height *int64) (*ctypes.ResultBlockResults, e
 			result, err = r.cli.BlockResults(height)
 			return err
 		},
-		retry.DelayType(retry.BackOffDelay),
+		r.getRetryOptions()...,
 	)
 
 	return result, err
+}
+
+func (r *RetryClient) getRetryOptions() []retry.Option {
+	return []retry.Option{
+		retry.OnRetry(func(n uint, err error) {
+			fmt.Printf("Retry #%d: %v\n", n, err)
+		}),
+		retry.DelayType(retry.BackOffDelay),
+	}
 }
