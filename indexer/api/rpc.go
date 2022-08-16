@@ -28,8 +28,8 @@ func StartRPC(listener string, indexer txindex.TxIndexer, eventBus *ttypes.Event
 		"unsubscribe":     rpcserver.NewWSRPCFunc(rpccore.Unsubscribe, "query"),
 		"unsubscribe_all": rpcserver.NewWSRPCFunc(rpccore.UnsubscribeAll, ""),
 
-		"tx":        rpcserver.NewRPCFunc(NewTx(indexer), "hash"),
-		"tx_search": rpcserver.NewRPCFunc(NewTxSearch(indexer), "query,page,per_page,order_by"),
+		"tx":        rpcserver.NewRPCFunc(NewTx(indexer), "hash,prove"),
+		"tx_search": rpcserver.NewRPCFunc(NewTxSearch(indexer), "query,prove,page,per_page,order_by"),
 	}
 
 	listenAddrs := []string{listener}
