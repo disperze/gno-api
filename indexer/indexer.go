@@ -23,6 +23,7 @@ import (
 
 var (
 	lastHeightKey = []byte("last_height")
+	blockTime     = time.Duration(6) // secs
 )
 
 func batchSync(indexer txindex.TxIndexer, eventBus *ttypes.EventBus, remote string, startHeight int64) (int64, error) {
@@ -132,6 +133,6 @@ func StartIndexer(remote string, indexer txindex.TxIndexer, store dbm.DB, eventB
 			startHeight = lastHeight
 		}
 
-		time.Sleep(6 * time.Second)
+		time.Sleep(blockTime * time.Second)
 	}
 }

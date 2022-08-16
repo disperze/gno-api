@@ -50,7 +50,6 @@ func StartRPC(listener string, indexer txindex.TxIndexer, eventBus *ttypes.Event
 				}
 			}),
 			rpcserver.ReadLimit(config.MaxBodyBytes),
-			// rpcserver.WriteChanCapacity(n.config.RPC.WebSocketWriteBufferSize),
 		)
 		wm.SetLogger(wmLogger)
 		mux.HandleFunc("/websocket", wm.WebsocketHandler)

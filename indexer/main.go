@@ -13,7 +13,7 @@ import (
 
 var (
 	remotePtr      = flag.String("remote", "http://localhost:26657", "Remote rpc")
-	rpcPtr         = flag.String("port", "tcp://127.0.0.1:26657", "RPC addr")
+	rpcPtr         = flag.String("addr", "tcp://127.0.0.1:26657", "RPC addr")
 	startHeightPtr = flag.Int64("start", 1, "Start height")
 )
 
