@@ -10,7 +10,7 @@ import (
 	"github.com/gnolang/gno/pkgs/std"
 
 	abci "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/state/txindex/kv"
+	"github.com/tendermint/tendermint/state/txindex"
 	dbm "github.com/tendermint/tm-db"
 
 	_ "github.com/gnolang/gno/pkgs/sdk/auth"
@@ -24,7 +24,7 @@ var (
 	lastHeightKey = []byte("last_height")
 )
 
-func batchSync(index *kv.TxIndex, remote string, startHeight int64) (int64, error) {
+func batchSync(indexer txindex.TxIndexer, remote string, startHeight int64) (int64, error) {
 	c := client.NewHTTP(remote, "/websocket")
 	status, err := c.Status()
 	if err != nil {
@@ -87,7 +87,7 @@ func batchSync(index *kv.TxIndex, remote string, startHeight int64) (int64, erro
 				},
 			}
 
-			err = index.Index(data)
+			err = indexer.Index(data)
 			if err != nil {
 				return height, err
 			}
@@ -96,8 +96,7 @@ func batchSync(index *kv.TxIndex, remote string, startHeight int64) (int64, erro
 	return last, nil
 }
 
-func StartIndexer(remote string, store dbm.DB, startHeight int64) error {
-	indexer := kv.NewTxIndex(store)
+func StartIndexer(remote string, indexer txindex.TxIndexer, store dbm.DB, startHeight int64) error {
 	if exist, _ := store.Has(lastHeightKey); exist {
 		val, err := store.Get(lastHeightKey)
 		if err != nil {

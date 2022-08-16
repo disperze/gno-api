@@ -34,7 +34,7 @@ func main() {
 	eventBus.SetLogger(logger.With("module", "events"))
 	go api.StartRPC(*rpcPtr, indexer, eventBus, logger)
 
-	err = StartIndexer(*remotePtr, store, *startHeightPtr)
+	err = StartIndexer(*remotePtr, indexer, store, *startHeightPtr)
 	if err != nil {
 		panic(err)
 	}
