@@ -3,7 +3,9 @@ package main
 import (
 	"flag"
 
+	"github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/state/txindex/kv"
+	ttypes "github.com/tendermint/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 
 	"github.com/disperze/gno-api/indexer/api"
@@ -26,7 +28,11 @@ func main() {
 	defer store.Close()
 
 	indexer := kv.NewTxIndex(store)
-	go api.StartRPC(indexer, *rpcPtr)
+	logger := log.NewNopLogger()
+
+	eventBus := ttypes.NewEventBus()
+	eventBus.SetLogger(logger.With("module", "events"))
+	go api.StartRPC(*rpcPtr, indexer, eventBus, logger)
 
 	err = StartIndexer(*remotePtr, store, *startHeightPtr)
 	if err != nil {

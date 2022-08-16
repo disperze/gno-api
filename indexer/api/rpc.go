@@ -12,17 +12,13 @@ import (
 	ttypes "github.com/tendermint/tendermint/types"
 )
 
-func StartRPC(indexer txindex.TxIndexer, listner string) ([]net.Listener, error) {
-	logger := log.NewNopLogger()
-	eventBus := ttypes.NewEventBus()
-	eventBus.SetLogger(logger.With("module", "events"))
-
+func StartRPC(listener string, indexer txindex.TxIndexer, eventBus *ttypes.EventBus, logger log.Logger) ([]net.Listener, error) {
 	var routes = map[string]*rpcserver.RPCFunc{
 		"tx":        rpcserver.NewRPCFunc(NewTx(indexer), "hash"),
 		"tx_search": rpcserver.NewRPCFunc(NewTxSearch(indexer), "query,page,per_page,order_by"),
 	}
 
-	listenAddrs := []string{listner}
+	listenAddrs := []string{listener}
 
 	config := rpcserver.DefaultConfig()
 	config.MaxOpenConnections = 100
@@ -66,6 +62,10 @@ func StartRPC(indexer txindex.TxIndexer, listner string) ([]net.Listener, error)
 		}()
 
 		listeners[i] = listener
+	}
+
+	if err := eventBus.Start(); err != nil {
+		return nil, err
 	}
 
 	return listeners, nil
