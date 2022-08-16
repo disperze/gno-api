@@ -6,14 +6,16 @@ import (
 	"github.com/avast/retry-go/v4"
 	"github.com/gnolang/gno/pkgs/bft/rpc/client"
 	ctypes "github.com/gnolang/gno/pkgs/bft/rpc/core/types"
+	"github.com/tendermint/tendermint/libs/log"
 )
 
 type RetryClient struct {
-	cli *client.HTTP
+	cli    *client.HTTP
+	logger log.Logger
 }
 
-func NewRetryClient(cli *client.HTTP) *RetryClient {
-	return &RetryClient{cli: cli}
+func NewRetryClient(cli *client.HTTP, logger log.Logger) *RetryClient {
+	return &RetryClient{cli: cli, logger: logger}
 }
 
 func (r *RetryClient) Status() (*ctypes.ResultStatus, error) {
@@ -61,7 +63,7 @@ func (r *RetryClient) BlockResults(height *int64) (*ctypes.ResultBlockResults, e
 func (r *RetryClient) getRetryOptions() []retry.Option {
 	return []retry.Option{
 		retry.OnRetry(func(n uint, err error) {
-			fmt.Printf("Retry #%d: %v\n", n, err)
+			r.logger.Info(fmt.Sprintf("Retry #%d: %v\n", n, err))
 		}),
 		retry.DelayType(retry.BackOffDelay),
 	}

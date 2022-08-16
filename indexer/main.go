@@ -35,7 +35,7 @@ func main() {
 
 	go api.StartRPC(*rpcPtr, indexer, eventBus, logger)
 
-	err = StartIndexer(*remotePtr, indexer, store, eventBus, *startHeightPtr)
+	err = StartIndexer(*remotePtr, *startHeightPtr, indexer, store, eventBus, logger)
 	if err != nil {
 		panic(err)
 	}
