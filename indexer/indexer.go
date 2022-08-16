@@ -11,6 +11,7 @@ import (
 
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/state/txindex"
+	ttypes "github.com/tendermint/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 
 	_ "github.com/gnolang/gno/pkgs/sdk/auth"
@@ -24,7 +25,7 @@ var (
 	lastHeightKey = []byte("last_height")
 )
 
-func batchSync(indexer txindex.TxIndexer, remote string, startHeight int64) (int64, error) {
+func batchSync(indexer txindex.TxIndexer, eventBus *ttypes.EventBus, remote string, startHeight int64) (int64, error) {
 	c := client.NewHTTP(remote, "/websocket")
 	status, err := c.Status()
 	if err != nil {
@@ -91,12 +92,19 @@ func batchSync(indexer txindex.TxIndexer, remote string, startHeight int64) (int
 			if err != nil {
 				return height, err
 			}
+
+			err = eventBus.PublishEventTx(ttypes.EventDataTx{
+				TxResult: *data,
+			})
+			if err != nil {
+				return height, err
+			}
 		}
 	}
 	return last, nil
 }
 
-func StartIndexer(remote string, indexer txindex.TxIndexer, store dbm.DB, startHeight int64) error {
+func StartIndexer(remote string, indexer txindex.TxIndexer, store dbm.DB, eventBus *ttypes.EventBus, startHeight int64) error {
 	if exist, _ := store.Has(lastHeightKey); exist {
 		val, err := store.Get(lastHeightKey)
 		if err != nil {
@@ -111,7 +119,7 @@ func StartIndexer(remote string, indexer txindex.TxIndexer, store dbm.DB, startH
 	}
 
 	for {
-		lastHeight, err := batchSync(indexer, remote, startHeight)
+		lastHeight, err := batchSync(indexer, eventBus, remote, startHeight)
 		if err != nil {
 			return err
 		}
