@@ -87,7 +87,7 @@ func AuthQueryHandler(cli client.ABCIClient) http.HandlerFunc {
 
 		result := AuthAccount{
 			Account: CosmosAccount{
-				Type:          "/cosmos.auth.v1beta1.BaseAccount",
+				Type:          "/std.BaseAccount",
 				Address:       account.GetAddress(),
 				PubKey:        account.GetPubKey(),
 				AccountNumber: account.GetAccountNumber(),
