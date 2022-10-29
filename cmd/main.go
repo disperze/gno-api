@@ -50,6 +50,7 @@ func main() {
 	r.HandleFunc("/cosmos/staking/v1beta1/delegations/{address}", handler.StakingQueryHandler(cli))
 	r.HandleFunc("/cosmos/staking/v1beta1/delegators/{address}/unbonding_delegations", handler.StakingUnbondingQueryHandler(cli))
 	r.HandleFunc("/cosmos/tx/v1beta1/txs", handler.ProtoTxsHandler(cli)).Methods(http.MethodPost)
+	r.HandleFunc("/cosmos/tx/v1beta1/simulate", handler.SimulateTxHandler(cli)).Methods(http.MethodPost)
 	r.HandleFunc("/txs/decode", handler.TxDecodeHandler(cli)).Methods(http.MethodGet)
 	r.HandleFunc("/txs", handler.TxsHandler(cli)).Methods(http.MethodPost)
 

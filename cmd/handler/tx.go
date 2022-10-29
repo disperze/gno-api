@@ -9,6 +9,7 @@ import (
 	"github.com/gnolang/gno/pkgs/amino"
 	"github.com/gnolang/gno/pkgs/bft/rpc/client"
 	ctypes "github.com/gnolang/gno/pkgs/bft/rpc/core/types"
+	keysclient "github.com/gnolang/gno/pkgs/crypto/keys/client"
 	"github.com/gnolang/gno/pkgs/std"
 )
 
@@ -24,6 +25,14 @@ type TxResponse struct {
 	RawLog    string `json:"raw_log,omitempty"`
 	GasWanted int64  `json:"gas_wanted,omitempty"`
 	GasUsed   int64  `json:"gas_used,omitempty"`
+}
+
+type SimulateResponse struct {
+	GasInfo TxGasResult `json:"gas_info"`
+}
+
+type TxGasResult struct {
+	GasUsed int64 `json:"gas_used"`
 }
 
 func TxsHandler(cli client.ABCIClient) http.HandlerFunc {
@@ -112,6 +121,40 @@ func ProtoTxsHandler(cli client.ABCIClient) http.HandlerFunc {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(response)
+	}
+}
+
+func SimulateTxHandler(cli client.ABCIClient) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var params struct {
+			TxBytes string `json:"tx_bytes"`
+		}
+		err := json.NewDecoder(r.Body).Decode(&params)
+		if err != nil {
+			writeError(w, fmt.Errorf("%s, %s", "unmarshaling json params", err.Error()))
+			return
+		}
+
+		txBz, err := base64.StdEncoding.DecodeString(params.TxBytes)
+		if err != nil {
+			writeError(w, fmt.Errorf("%s, %s", "cannot decode tx", err.Error()))
+			return
+		}
+		response, err := keysclient.SimulateTx(cli, txBz)
+		if err != nil {
+			writeError(w, fmt.Errorf("%s, %s", "cannot simulate tx", err.Error()))
+			return
+		}
+
+		result := &SimulateResponse{
+			GasInfo: TxGasResult{
+				GasUsed: response.DeliverTx.GasUsed,
+			},
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(result)
 	}
 }
 
