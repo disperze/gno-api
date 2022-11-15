@@ -161,7 +161,7 @@ func BankQueryHandler(cli client.ABCIClient) http.HandlerFunc {
 
 		coins := []std.Coin{}
 		if balance != "" {
-			coins = append(coins, std.MustParseCoin(balance))
+			coins = std.MustParseCoins(balance)
 		}
 
 		result := BankResult{
