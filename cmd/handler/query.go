@@ -61,7 +61,13 @@ func GnoRenderQueryHandler(cli client.ABCIClient) http.HandlerFunc {
 func AuthQueryHandler(cli client.ABCIClient) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
-		authPath := fmt.Sprintf("auth/accounts/%s", vars["address"])
+		addr, err := crypto.AddressFromBech32(vars["address"])
+		if err != nil {
+			writeError(w, err)
+			return
+		}
+
+		authPath := fmt.Sprintf("auth/accounts/%s", addr.String())
 		res, err := cli.ABCIQuery(authPath, nil)
 		if err != nil {
 			writeError(w, err)
@@ -139,8 +145,13 @@ func TxDecodeHandler(cli client.ABCIClient) http.HandlerFunc {
 func BankQueryHandler(cli client.ABCIClient) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
+		addr, err := crypto.AddressFromBech32(vars["address"])
+		if err != nil {
+			writeError(w, err)
+			return
+		}
 
-		authPath := fmt.Sprintf("bank/balances/%s", vars["address"])
+		authPath := fmt.Sprintf("bank/balances/%s", addr.String())
 		res, err := cli.ABCIQuery(authPath, nil)
 		if err != nil {
 			writeError(w, err)
