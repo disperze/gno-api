@@ -38,26 +38,6 @@ type CosmosAccount struct {
 	Sequence      uint64         `json:"sequence"`
 }
 
-func GnoRenderQueryHandler(cli client.ABCIClient) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		params := r.URL.Query()
-		data := []byte(fmt.Sprintf("%s\n%s", params.Get("realm"), params.Get("query")))
-		res, err := cli.ABCIQuery("vm/qrender", data)
-		if err != nil {
-			writeError(w, err)
-			return
-		}
-
-		if res.Response.Error != nil {
-			writeError(w, res.Response.Error)
-			return
-		}
-
-		w.WriteHeader(http.StatusOK)
-		fmt.Fprint(w, string(res.Response.Data))
-	}
-}
-
 func AuthQueryHandler(cli client.ABCIClient) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
