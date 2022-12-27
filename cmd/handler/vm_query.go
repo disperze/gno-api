@@ -51,7 +51,7 @@ func GnoFuncsQueryHandler(cli client.ABCIClient) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		params := r.URL.Query()
 		data := []byte(params.Get("realm"))
-		res, err := cli.ABCIQuery("vm/qeval", data)
+		res, err := cli.ABCIQuery("vm/qfuncs", data)
 		if err != nil {
 			writeError(w, err)
 			return
