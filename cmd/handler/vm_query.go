@@ -30,7 +30,7 @@ func GnoRenderQueryHandler(cli client.ABCIClient) http.HandlerFunc {
 func GnoEvalQueryHandler(cli client.ABCIClient) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		params := r.URL.Query()
-		data := []byte(fmt.Sprintf("%s\n%s", params.Get("realm"), params.Get("func")))
+		data := []byte(fmt.Sprintf("%s\n%s", params.Get("realm"), params.Get("eval")))
 		res, err := cli.ABCIQuery("vm/qeval", data)
 		if err != nil {
 			writeError(w, err)

@@ -45,6 +45,8 @@ func main() {
 
 	r := mux.NewRouter()
 	r.HandleFunc("/gno/render", handler.GnoRenderQueryHandler(cli)).Methods(http.MethodGet)
+	r.HandleFunc("/gno/eval", handler.GnoEvalQueryHandler(cli)).Methods(http.MethodGet)
+	r.HandleFunc("/gno/funcs", handler.GnoFuncsQueryHandler(cli)).Methods(http.MethodGet)
 	r.HandleFunc("/cosmos/auth/v1beta1/accounts/{address}", handler.AuthQueryHandler(cli))
 	r.HandleFunc("/cosmos/bank/v1beta1/balances/{address}", handler.BankQueryHandler(cli))
 	r.HandleFunc("/cosmos/staking/v1beta1/delegations/{address}", handler.StakingQueryHandler(cli))
